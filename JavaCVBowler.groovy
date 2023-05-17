@@ -88,7 +88,7 @@ while(!Thread.interrupted() && run) {
 				}
 
 				// detect faces
-				faceCascade.detectMultiScale(grayFrame, faces, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				faceCascade.detectMultiScale(grayFrame, faces, 1.1, 10, 0 | Objdetect.CASCADE_SCALE_IMAGE,
 						new Size(absoluteFaceSize, absoluteFaceSize), new Size());
 
 				// each rectangle in faces is a face: draw them!
