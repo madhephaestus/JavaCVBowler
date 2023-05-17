@@ -126,4 +126,5 @@ while(!Thread.interrupted() && run) {
 }
 BowlerStudioController.removeObject(t)
 capture.release()
+println "clean exit and closed camera"
 
