@@ -52,7 +52,7 @@ Mat matrix =new Mat();
 VideoCapture capture = new VideoCapture(0);
 WritableImage img = null;
 try {
-	capture.read(matrix);
+	capture.open(0)
 
 	
 
