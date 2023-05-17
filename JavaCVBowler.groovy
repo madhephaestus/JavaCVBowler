@@ -27,6 +27,7 @@ import javafx.scene.image.WritableImage;
 import org.opencv.videoio.VideoCapture;
 
 import com.neuronrobotics.bowlerstudio.BowlerStudio
+import com.neuronrobotics.bowlerstudio.BowlerStudioController
 import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
 
 import org.opencv.core.Mat;
@@ -50,66 +51,79 @@ try {
 }
 Mat matrix =new Mat();
 VideoCapture capture = new VideoCapture(0);
+capture.open(0)
 WritableImage img = null;
-try {
-	capture.open(0)
+CascadeClassifier faceCascade = new CascadeClassifier();
+File fileFromGit = ScriptingEngine.fileFromGit("https://github.com/CommonWealthRobotics/harr-cascade-archive.git", "resources/haarcascades/haarcascade_frontalcatface_extended.xml")
+faceCascade.load(fileFromGit.getAbsolutePath());
+int absoluteFaceSize=0;
+Tab t =new Tab()
+boolean run = true
 
-	
+while(!Thread.interrupted() && run) {
+	Thread.sleep(16)
+	try {
+		// If camera is opened
+		if( capture.isOpened()) {
+			//println "Camera Open"
+			// If there is next video frame
+			if (capture.read(matrix)) {
+				MatOfRect faces = new MatOfRect();
+				Mat grayFrame = new Mat();
+				// face cascade classifier
 
-	// If camera is opened
-	if( capture.isOpened()) {
-		println "Camera Open"
-		// If there is next video frame
-		if (capture.read(matrix)) {
-			MatOfRect faces = new MatOfRect();
-			Mat grayFrame = new Mat();
-			// face cascade classifier
-			CascadeClassifier faceCascade = new CascadeClassifier();
-			File fileFromGit = ScriptingEngine.fileFromGit("https://github.com/CommonWealthRobotics/harr-cascade-archive.git", "resources/haarcascades/haarcascade_frontalcatface_extended.xml")
-			faceCascade.load(fileFromGit.getAbsolutePath());
-			int absoluteFaceSize=0;
-			// convert the frame in gray scale
-			Imgproc.cvtColor(matrix, grayFrame, Imgproc.COLOR_BGR2GRAY);
-			// equalize the frame histogram to improve the result
-			Imgproc.equalizeHist(grayFrame, grayFrame);
+				// convert the frame in gray scale
+				Imgproc.cvtColor(matrix, grayFrame, Imgproc.COLOR_BGR2GRAY);
+				// equalize the frame histogram to improve the result
+				Imgproc.equalizeHist(grayFrame, grayFrame);
 
-			// compute minimum face size (20% of the frame height, in our case)
-			if (absoluteFaceSize == 0)
-			{
-				int height = grayFrame.rows();
-				if (Math.round(height * 0.2f) > 0)
+				// compute minimum face size (20% of the frame height, in our case)
+				if (absoluteFaceSize == 0)
 				{
-					absoluteFaceSize = Math.round(height * 0.2f);
+					int height = grayFrame.rows();
+					if (Math.round(height * 0.2f) > 0)
+					{
+						absoluteFaceSize = Math.round(height * 0.2f);
+					}
+				}
+
+				// detect faces
+				faceCascade.detectMultiScale(grayFrame, faces, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+						new Size(absoluteFaceSize, absoluteFaceSize), new Size());
+
+				// each rectangle in faces is a face: draw them!
+				Rect[] facesArray = faces.toArray();
+				for (int i = 0; i < facesArray.length; i++)
+					Imgproc.rectangle(matrix, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0), 3);
+
+
+				//println "Capture success"
+				// Creating BuffredImage from the matrix
+				BufferedImage image = new BufferedImage(matrix.width(),
+						matrix.height(), BufferedImage.TYPE_3BYTE_BGR);
+
+				WritableRaster raster = image.getRaster();
+				DataBufferByte dataBuffer = (DataBufferByte) raster.getDataBuffer();
+				byte[] data = dataBuffer.getData();
+				matrix.get(0, 0, data);
+				// Creating the Writable Image
+				if(img==null) {
+					img = SwingFXUtils.toFXImage(image, null);
+					
+					t=new Tab("Imace capture ");
+					t.setContent(new ImageView(img))
+					BowlerStudioController.addObject(t, null);
+				}else{
+					SwingFXUtils.toFXImage(image, img);
 				}
 			}
-
-			// detect faces
-			faceCascade.detectMultiScale(grayFrame, faces, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
-					new Size(absoluteFaceSize, absoluteFaceSize), new Size());
-
-			// each rectangle in faces is a face: draw them!
-			Rect[] facesArray = faces.toArray();
-			for (int i = 0; i < facesArray.length; i++)
-				Imgproc.rectangle(matrix, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0), 3);
-
-
-			println "Capture success"
-			// Creating BuffredImage from the matrix
-			BufferedImage image = new BufferedImage(matrix.width(),
-					matrix.height(), BufferedImage.TYPE_3BYTE_BGR);
-
-			WritableRaster raster = image.getRaster();
-			DataBufferByte dataBuffer = (DataBufferByte) raster.getDataBuffer();
-			byte[] data = dataBuffer.getData();
-			matrix.get(0, 0, data);
-			// Creating the Writable Image
-			img = SwingFXUtils.toFXImage(image, null);
 		}
+	}catch(Throwable tr) {
+		BowlerStudio.printStackTrace(tr)
+		break;
 	}
-}catch(Throwable t) {
-	BowlerStudio.printStackTrace(t)
+	
 }
+BowlerStudioController.removeObject(t)
 capture.release()
-Tab t=new Tab("Imace capture ");
-t.setContent(new ImageView(img))
-return t;
+
