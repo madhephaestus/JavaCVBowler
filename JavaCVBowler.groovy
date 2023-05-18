@@ -54,7 +54,9 @@ VideoCapture capture = new VideoCapture(0);
 capture.open(0)
 WritableImage img = null;
 CascadeClassifier faceCascade = new CascadeClassifier();
-File fileFromGit = ScriptingEngine.fileFromGit("https://github.com/CommonWealthRobotics/harr-cascade-archive.git", "resources/haarcascades/haarcascade_frontalcatface_extended.xml")
+//File fileFromGit = ScriptingEngine.fileFromGit("https://github.com/CommonWealthRobotics/harr-cascade-archive.git", "resources/haarcascades/haarcascade_frontalcatface_extended.xml")
+File fileFromGit = ScriptingEngine.fileFromGit("https://github.com/CommonWealthRobotics/harr-cascade-archive.git", "resources/haarcascades/haarcascade_frontalface_default.xml")
+
 faceCascade.load(fileFromGit.getAbsolutePath());
 int absoluteFaceSize=0;
 Tab t =new Tab()
